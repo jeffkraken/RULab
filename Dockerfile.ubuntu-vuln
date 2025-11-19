@@ -1,0 +1,48 @@
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+# Install vulnerable/legacy services and some basic tools
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    apache2 \
+    vsftpd \
+    sudo \
+    netcat \
+    wget \
+    curl \
+    ftp \
+    && apt-get clean
+# Set a weak root password
+RUN echo 'root:toor' | chpasswd
+# Create an insecure user
+RUN useradd -m -s /bin/bash student && echo "student:password" | chpasswd && usermod -aG sudo student
+# Apache: Simple index page
+RUN echo 'Welcome to Ubuntu Vulnerable Workstation!' > /var/www/html/index.html
+# vsftpd setup (anonymous uploads allowed, mapped to student user)
+RUN mv /etc/vsftpd.conf /etc/vsftpd.conf.orig && \
+    echo "\
+listen=YES\n\
+anonymous_enable=YES\n\
+local_enable=YES\n\
+write_enable=YES\n\
+anon_upload_enable=YES\n\
+anon_mkdir_write_enable=YES\n\
+dirmessage_enable=YES\n\
+use_localtime=YES\n\
+xferlog_enable=YES\n\
+connect_from_port_20=YES\n\
+chroot_local_user=YES\n\
+allow_writeable_chroot=YES\n\
+pasv_min_port=30000\n\
+pasv_max_port=30009\n\
+guest_enable=YES\n\
+guest_username=student\n\
+anon_root=/home/student\n\
+" > /etc/vsftpd.conf
+RUN chown student:student /home/student && chmod 755 /home/student
+# SSH setup
+RUN mkdir /var/run/sshd
+EXPOSE 22 80 21
+CMD /usr/sbin/sshd && \
+    service apache2 start && \
+    vsftpd /etc/vsftpd.conf && \
+    tail -f /dev/null
