@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  ubuntu-vuln:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu-vuln
+    container_name: ubuntu-vuln
+    ports:
+      - "2223:22"
+      - "8082:80"
+      - "2122:21"
+    networks:
+      - lab_network
+
+  rockylinux-target:
+    build:
+      context: .
+      dockerfile: Dockerfile.rocky-vuln 
+    container_name: rocky-vuln
+    ports:
+      - "2121:21"
+      - "2222:22"
+      - "8081:80"
+    networks:
+      - lab_network
+
+networks:
+  lab_network:
+    driver: bridge
