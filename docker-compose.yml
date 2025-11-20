@@ -24,6 +24,14 @@ services:
       - "8081:80"
     networks:
       - lab_network
+      
+    attacker:
+      image: kalilinux/kali-rolling:latest
+      container_name: kali-attacker
+      networks:
+        - lab_network
+      command: tail -F /dev/null
+      tty: true
 
 networks:
   lab_network:
